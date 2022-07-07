@@ -20,7 +20,7 @@ function getrandom ( max: number, min: number = 1 ): number {
 
 
 
-module.exports = describe('Big arithmetic tests:', function () {
+describe('Big arithmetic tests:', function () {
 
     describe('Small numbers tests:', function () {
 
