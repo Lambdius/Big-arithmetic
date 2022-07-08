@@ -6,58 +6,7 @@ import readline from 'readline'
 
 
 
-import { add } from './src/1_addition'
-import { sub } from './src/2_subtraction'
-import { mul } from './src/3_multiplication'
-import { div } from './src/4_division'
-
-
-
-const operators: Array<String> = [ "-", "+", "*", "/" ],
-      operations: Array<Function> = [ sub, add, mul, div ],
-      priority: Array<number> = [ 1, 1, 2, 2 ]
-
-
-
-function expressionParser ( expression: string ): string 
-{
-    if ( !expression.trim().length ) return '0'
-
-    let numbersStack: Array<string> = [],
-        operatorsStack: Array<string> = [],
-        lexems: Array<string> = expression.match(/-?\d+\.\d+|-?\d+|[-+\/*()]/g)||[]
-
-    function calculateLast(): void {
-        let operator: string = operatorsStack.pop() || '',
-            operands = numbersStack.splice(-2)
-        numbersStack.push( operations[ operators.indexOf(operator) ]( ...operands ) )
-    }
-
-    for ( let lex of lexems ) {
-
-        let last: string = operatorsStack.at(-1) || ''
-        
-        if ( /^-?\d+(\.\d+)?$/.test( lex ) ) {
-            numbersStack.push( lex )
-        } else if ( ( priority[ operators.indexOf(last) ] || 0 ) < priority[ operators.indexOf(lex) ] || lex === '(' || last === '(' ) {
-            operatorsStack.push( lex )
-        } else if ( lex === ')' ) {
-            while ( last !== '(' ) {
-                calculateLast()
-                last = operatorsStack.at(-1) || ''
-            }
-            operatorsStack.pop()
-        } else {
-            calculateLast()
-            operatorsStack.push( lex )
-        }
-        
-    }
-    
-    while ( operatorsStack.length ) calculateLast()
-    
-    return numbersStack.pop()||'0'
-}
+import { expressionParser } from './src/0_parser'
 
 
 
@@ -68,14 +17,31 @@ const rl = readline.createInterface({
 
 
 
-let fn = () => rl.question(
-    'Enter an expression: ',
-    (answer) => {
-        console.log(answer + ' = ' + expressionParser(answer))
-        fn()
-    }
-)
+process.stdin.on("keypress",(_,key)=>{
+    if ( key.ctrl && key.name == "c" ) process.stdout.write('\u001B[2J\u001B[0;0f')
+})
 
 
 
-fn()
+function colorize( expression: string ): string 
+{
+    return ( expression.match(/-?\d+\.\d+|-?\d+|[-+\/*()]/g) || [] ).map( (e) => 
+        /-?\d+\.\d+|-?\d+/.test(e) ? "\x1b[32m" + e + "\x1b[0m" : 
+        /\(|\)/.test(e) ? "\x1b[33m" + e + "\x1b[0m" : 
+        "\x1b[37m" + e + "\x1b[0m").join(" ")
+}
+
+
+
+function recursiveQuestion() {
+    rl.question( "\x1b[36m>>>\tEnter an expression: \x1b[0m",
+        ( expression ) => {
+            process.stdout.write('\u001B[2J\u001B[0;0f')
+            expression = (expression.replace(/\d-\d/g,(e)=>[...e].join(" ")).match(/-?\d+\.\d+|-?\d+|[-+\/*()]/g) || []).join(" ")
+            console.log( "\x1b[36m\n>>>\tResult: \x1b[0m" + colorize(expression) + ' = ' + "\x1b[32m" + expressionParser(expression) + "\x1b[0m\n" )
+            recursiveQuestion()
+        }
+    )
+}
+
+recursiveQuestion()

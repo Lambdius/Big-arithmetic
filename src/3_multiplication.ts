@@ -1,33 +1,35 @@
 'use strict'
 
-export function mul (a: string, b: string, r: Array<number> = []): string
+
+
+export function mul( numA: string, numB: string, result: Array<number> = [] ): string
 {
     
-    if ( /^-?0+\.?(0+)?$/.test(a) || /^-?0+\.?(0+)?$/.test(b) ) return "0"
-    if ( /^\./.test(a) ) a = "0" + a
-    if ( /^\./.test(b) ) b = "0" + b
+    if ( /^-?0+(\.0+)?$/.test(numA) || /^-?0+(\.0+)?$/.test(numB) ) return "0"
+    if ( /^\./.test(numA) ) numA = "0" + numA
+    if ( /^\./.test(numB) ) numB = "0" + numB
 
-    const sign: string = Number(/^\-/.test(a)) + Number(/^\-/.test(b)) === 1 ? "-" : "",
-          point: number = ( a.indexOf('.') < 0 ? 0 : (a.length - a.indexOf('.') - 1) ) 
-                + ( b.indexOf('.') < 0 ? 0 : (b.length - b.indexOf('.') - 1) )
+    const sign: string = Number( /^\-/.test(numA) ) + Number( /^\-/.test(numB) ) === 1 ? "-" : "",
+          point: number = ( numA.indexOf('.') < 0 ? 0 : (numA.length - numA.indexOf('.') - 1) ) 
+                        + ( numB.indexOf('.') < 0 ? 0 : (numB.length - numB.indexOf('.') - 1) )
 
-    a=a.replace(/^-?0*|\.?|0*$/g,"")
-    b=b.replace(/^-?0*|\.?|0*$/g,"")
+    numA = numA.replace(/^-?0*|\.?|0*$/g,"")
+    numB = numB.replace(/^-?0*|\.?|0*$/g,"")
     
-    for ( let i: number = a.length - 1; i >= 0; i-- )
-        for ( let j: number = b.length - 1; j >= 0; j-- )
+    for ( let i: number = numA.length - 1; i >= 0; i-- )
+        for ( let j: number = numB.length - 1; j >= 0; j-- )
         {
-            let m: number = Number(a[ i ]) * Number(b[ j ]) + ( r[ i + j + 1 ]||0 )
-            r[ i + j + 1 ] = m % 10
-            r[ i + j ] = ( r[ i + j ]||0 ) + Math.floor( m / 10 )
+            let m: number = Number(numA[ i ]) * Number(numB[ j ]) + ( result[ i + j + 1 ]||0 )
+            result[ i + j + 1 ] = m % 10
+            result[ i + j ] = ( result[ i + j ]||0 ) + Math.floor( m / 10 )
         }
 
     if ( point ) {
-        const integer: string = r.slice(0,r.length-point).join("").replace(/^0+/,"")||"0",
-              factorial: string = ( "." + r.slice(-point).join("") ).replace(/\.?0+$/,"")
+        const integer: string = result.slice( 0, result.length - point ).join("").replace(/^0+/,"") || "0",
+              factorial: string = ( "." + result.slice( -point ).join("") ).replace(/\.?0+$/,"")
         return sign + integer + factorial
     } else {
-        return sign + r.join("").replace(/^0+/,"")
+        return sign + result.join("").replace(/^0+/,"")
     }
 
 }
