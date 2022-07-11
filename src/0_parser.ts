@@ -9,48 +9,47 @@ import { div } from './4_division'
 
 
 
-const operators: Array<String> = [ "-", "+", "*", "/" ],
-      operations: Array<Function> = [ sub, add, mul, div ],
-      priority: Array<number> = [ 1, 1, 2, 2 ]
-
-
-
-export function expressionParser ( expression: string ): string 
+export function expressionParser ( lexems: Array<string> ): string
 {
-    if ( !expression.trim().length ) return "0"
 
-    let numbersStack: Array<string> = [],
-        operatorsStack: Array<string> = [],
-        lexems: Array<string> = expression.match(/-?\d+\.\d+|-?\d+|[-+\/*()]/g)||[]
-
-    function calculateLast(): void {
-        let operator: string = operatorsStack.pop() || "",
-            operands: Array<string> = numbersStack.splice(-2)
-        numbersStack.push( operations[ operators.indexOf(operator) ]( ...operands ) )
+    const curr   = ( ): string                                 => lexems[0] || "",
+          next   = ( ): string                                 => lexems.shift() || "",
+          incl   = ( ...tokens: Array<string> ): boolean       => tokens.includes( curr() ),
+          calc   = ( token: string, action: Function ): string => incl( token ) && next() && action()
+          
+    const brackets = ( ): string => {
+          next()
+          const res: string = priorityB()
+          next()
+          return res
     }
 
-    for ( let lex of lexems ) {
-
-        let last: string = operatorsStack.at(-1) || ""
-        
-        if ( /^-?\d+(\.\d+)?$/.test( lex ) ) {
-            numbersStack.push( lex )
-        } else if ( ( priority[ operators.indexOf(last) ] || 0 ) < priority[ operators.indexOf(lex) ] || lex === "(" || last === "(" ) {
-            operatorsStack.push( lex )
-        } else if ( lex === ")" ) {
-            while ( last !== "(" ) {
-                calculateLast()
-                last = operatorsStack.at(-1) || ""
-            }
-            operatorsStack.pop()
-        } else {
-            calculateLast()
-            operatorsStack.push( lex )
-        }
-        
+    const prefix = ( ): string => {
+          next()
+          const res: string = nonInfix()
+          if( /^-/.test(res) ) return res.slice(1)
+          return "-" + res
     }
+
+    const nonInfix = ( ): string => 
+          incl( "(" )     ? brackets() : 
+          incl( "-" )     ? prefix()   : 
+          next()
+
+    const priorityA = ( r = nonInfix() ): string => 
+          incl( "*", "/" ) ? ( 
+                calc( "*", () => r = mul( r, nonInfix() ) ), 
+                calc( "/", () => r = div( r, nonInfix() ) ),
+                priorityA( r )
+          ) : r
+            
+    const priorityB = ( r = priorityA() ): string => 
+          incl( "+", "-" ) ? (
+                calc( "+", () => r = add( r, priorityA() ) ),
+                calc( "-", () => r = sub( r, priorityA() ) ),
+                priorityB( r )
+          ) : r 
+
+    return priorityB()
     
-    while ( operatorsStack.length ) calculateLast()
-    
-    return numbersStack.pop() || "0"
 }
